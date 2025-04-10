@@ -1,8 +1,12 @@
 use std::collections::BTreeMap;
+
+
+type BlockNumber = u64;
+type AccountId = String;
 #[derive(Debug)]
 pub struct Pallet {
-    block_number: u64,
-    nonce: BTreeMap<String, u64>,    
+    block_number: BlockNumber,
+    nonce: BTreeMap<AccountId, BlockNumber>,    
 }
 
 impl Pallet {
@@ -13,7 +17,7 @@ impl Pallet {
         }
     }
 
-    pub fn block_number(&self) -> u64 {
+    pub fn block_number(&self) -> BlockNumber {
         self.block_number
     }
 
@@ -21,7 +25,7 @@ impl Pallet {
         self.block_number = self.block_number.checked_add(1).expect("overflow");
     }
 
-    pub fn increment_nonce(&mut self, account: &String) {        
+    pub fn increment_nonce(&mut self, account: &AccountId) {        
         *self.nonce.entry(account.clone()).or_insert(0) += 1;        
     }
 }
@@ -48,7 +52,7 @@ mod tests {
     #[should_panic(expected = "overflow")]
     fn test_block_number_overflow() {
         let mut system = Pallet::new();
-        system.block_number = u64::MAX;
+        system.block_number = BlockNumber::MAX;
         system.increment_block_number();
     }
 

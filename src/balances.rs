@@ -1,58 +1,50 @@
 use std::collections::BTreeMap;
+use num::traits::{CheckedAdd, CheckedSub, Zero};
 
 #[derive(Debug)]
-pub struct Pallet {
-    balances: BTreeMap<String, u128>,
+pub struct Pallet<AccountId, Balance> {
+    balances: BTreeMap<AccountId, Balance>,
 }
 
-impl Pallet {
+impl <AccountId, Balance> Pallet<AccountId, Balance> 
+where
+    AccountId: Ord + Clone,
+    Balance: CheckedAdd + CheckedSub + Zero + Copy,
+{
     pub fn new() -> Self {
         Self {
             balances: BTreeMap::new(),
         }
     }
 
-    pub fn set_balance(&mut self, account: String, balance: u128) {
+    pub fn set_balance(&mut self, account: AccountId, balance: Balance) {
         self.balances.insert(account, balance);
     }
 
-    pub fn balance(&self, account: String) -> u128 {
-        self.balances.get(&account).copied().unwrap_or(0)
+    pub fn balance(&self, account: AccountId) -> Balance {
+        self.balances.get(&account).copied().unwrap_or(Balance::zero())
     }
 
     pub fn transfer(
         &mut self,
-        caller: String,
-        to: String,
-        amount: u128,
-    ) -> Result<(), String> {
-        // let caller_balance = self.balance(caller.clone());
-        // let caller_balance = self.balance(&caller);
-        let caller_balance = *self.balances.get(&caller).unwrap_or(&0);
+        caller: AccountId,
+        to: AccountId,
+        amount: Balance,
+    ) -> Result<(), &'static str> {
+        let caller_balance = *self.balances.get(&caller).unwrap_or(&Balance::zero());
         let new_caller_balance = caller_balance
-            .checked_sub(amount)
+            .checked_sub(&amount)
             .ok_or("insufficient balance")?;
 
-        let to_balance = *self.balances.get(&to).unwrap_or(&0);
+        let to_balance = *self.balances.get(&to).unwrap_or(&Balance::zero());
         let new_to_balance = to_balance
-            .checked_add(amount)
+            .checked_add(&amount)
             .ok_or("overflow")?;
 
-        self.balances.insert(caller.to_string(), new_caller_balance);
-        self.balances.insert(to.to_string(), new_to_balance);
+        self.balances.insert(caller, new_caller_balance);
+        self.balances.insert(to, new_to_balance);
 
-        Ok(())
-
-        // let caller_balance = *self.balances.get(&caller).unwrap_or(&0);
-        // let to_balance = self.balance(to);
-
-        // let new_caller_balance = caller_balance.checked_sub(amount).ok_or("insufficient balance")?;
-        // let new_to_balance = to_balance.checked_add(amount).ok_or("overflow")?;
-
-        // self.balances.insert(caller, new_caller_balance);
-        // self.balances.insert(to, new_to_balance);
-
-        // Ok(())
+        Ok(())        
     }
 }
 
@@ -70,13 +62,13 @@ fn transfer_balance() {
 
     assert_eq!(
         balances.transfer("daniel".to_string(), "vini".to_string(),10),
-        Err("insufficient balance".to_string())
+        Err("insufficient balance")
     );
 
     balances.set_balance("daniel".to_string(), 10);
     assert_eq!(balances.transfer("daniel".to_string(), "vini".to_string(), 5), Ok(()));
 
-    balances.set_balance("vini".to_string(), u128::MAX);
+    balances.set_balance("vini".to_string(), u32::MAX);
     assert_eq!(balances.transfer("daniel".to_string(), "vini".to_string(), 5),
-    Err("overflow".to_string()));
+    Err("overflow"));
 }

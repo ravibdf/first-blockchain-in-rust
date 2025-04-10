@@ -1,9 +1,11 @@
 mod balances;
 mod system;
 
+type Balance = u128;
+type AccountId = String;
 #[derive(Debug)]
 pub struct Runtime {
-    balances: balances::Pallet,
+    balances: balances::Pallet<AccountId, Balance>,
     system: system::Pallet,
 }
 
