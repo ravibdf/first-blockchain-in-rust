@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-
+#[derive(Debug)]
 pub struct Pallet {
     block_number: u64,
     nonce: BTreeMap<String, u64>,    

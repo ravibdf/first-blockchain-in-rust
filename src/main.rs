@@ -1,6 +1,7 @@
 mod balances;
 mod system;
 
+#[derive(Debug)]
 pub struct Runtime {
     balances: balances::Pallet,
     system: system::Pallet,
@@ -37,5 +38,6 @@ fn main() {
     }
 
     println!("Alice's balances: {}", runtime.balances.balance(alice.clone()));
+    println!("{:#?}", runtime);
 
 }
