@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 use num::traits::{CheckedAdd, CheckedSub, Zero};
 
+use crate::support::DispatchResult;
+
 pub trait Config: crate::system::Config{
     type Balance: CheckedAdd + CheckedSub + Zero + Copy;
 }
@@ -30,7 +32,7 @@ impl <T: Config> Pallet<T>
         caller: T::AccountId,
         to: T::AccountId,
         amount: T::Balance,
-    ) -> Result<(), &'static str> {
+    ) -> DispatchResult {
         let caller_balance = *self.balances.get(&caller)
                                                         .unwrap_or(&T::Balance::zero());
         let new_caller_balance = caller_balance
