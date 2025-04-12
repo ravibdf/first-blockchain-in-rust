@@ -50,7 +50,7 @@ where
 
 #[test]
 fn initial_balance() {
-    let mut pallet = Pallet::new();
+    let mut pallet = Pallet::<String, u128>::new();
     pallet.set_balance("daniel".to_string(), 2);
 
     assert_eq!(pallet.balance("daniel".to_string()), 2);

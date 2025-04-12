@@ -1,18 +1,23 @@
 use std::collections::BTreeMap;
+use num::{CheckedAdd, One, Zero};
 
 
-type BlockNumber = u64;
-type AccountId = String;
+// type BlockNumber = u64;
+// type AccountId = String;
 #[derive(Debug)]
-pub struct Pallet {
+pub struct Pallet<BlockNumber, AccountId> {
     block_number: BlockNumber,
     nonce: BTreeMap<AccountId, BlockNumber>,    
 }
 
-impl Pallet {
+impl <BlockNumber, AccountId> Pallet <BlockNumber, AccountId> 
+where 
+    BlockNumber: Zero + Copy + CheckedAdd + One,
+    AccountId: Ord + Clone, 
+{
     pub fn new() -> Self {
         Pallet {
-            block_number: 0,
+            block_number: BlockNumber::zero(),  
             nonce: BTreeMap::new(),
         }
     }
@@ -22,28 +27,37 @@ impl Pallet {
     }
 
     pub fn increment_block_number(&mut self) {
-        self.block_number = self.block_number.checked_add(1).expect("overflow");
+        self.block_number = self.block_number.checked_add(&BlockNumber::one()).expect("overflow");
     }
 
     pub fn increment_nonce(&mut self, account: &AccountId) {        
-        *self.nonce.entry(account.clone()).or_insert(0) += 1;        
+        *self.nonce.entry(account.clone())
+        .or_insert(BlockNumber::zero()) = 
+        self.nonce.get(account).unwrap_or(&BlockNumber::zero())
+                .checked_add(&BlockNumber::one())
+                .expect("overflow");        
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use num::Bounded;
+
+    // Define concrete types for testing
+    type TestBlockNumber = u32;
+    type TestAccountId = String;
 
     #[test]
     fn test_initial_state() {
-        let system = Pallet::new();
+        let system: Pallet<TestBlockNumber, TestAccountId> = Pallet::new();
         assert_eq!(system.block_number(),0);
         assert!(system.nonce.is_empty());
     }
 
     #[test]
     fn test_block_number_increment() {
-        let mut system = Pallet::new();
+        let mut system: Pallet<TestBlockNumber, TestAccountId> = Pallet::new();
         system.increment_block_number();
         assert_eq!(system.block_number(), 1);
     }
@@ -51,8 +65,8 @@ mod tests {
     #[test]
     #[should_panic(expected = "overflow")]
     fn test_block_number_overflow() {
-        let mut system = Pallet::new();
-        system.block_number = BlockNumber::MAX;
+        let mut system: Pallet<TestBlockNumber, TestAccountId> = Pallet::new();
+        system.block_number = TestBlockNumber::MAX;
         system.increment_block_number();
     }
 
